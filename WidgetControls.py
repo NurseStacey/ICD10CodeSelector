@@ -847,9 +847,14 @@ class ListScrollCombo(tk.Frame):
         self.list_box_items = []
 
         for one_item in item_list:
-            #self.list_box_items.append(one_item.lower())
             self.list_box_items.append(one_item)
             self.listbox.insert(tk.END, one_item)
+
+    def add_one_item(self, one_item):
+
+        if not one_item in self.list_box_items:
+            self.list_box_items.append(one_item)
+            self.listbox.insert(tk.END, one_item)        
 
     def get_all_selected_texts(self):
         selections = self.listbox.curselection()
@@ -885,7 +890,9 @@ class ListScrollCombo(tk.Frame):
         self.listbox.selection_set(0)
         self.selection_made()
 
-
+    def get_all_items(self):
+        return self.list_box_items
+        
     def set_selection_mode(self, which):
         self.listbox.config(selectmode=which)
 
@@ -1021,7 +1028,13 @@ class MyCanvas(tk.Canvas):
     def Add_BlankLine(self, y):
         self.create_rectangle(0, y, 900, y+30, width=0,
                               fill=get_color('AntiqueWhite'))
-    #def Add_Line(self, the_code, description,x_offset, y, expanded, selected):
+    
+    def Create_Dummy_Line(self, y):
+
+        the_text= str(y) + 'x'*125
+        self.create_text(0, y, anchor='nw', text=the_text, font=tkfont.Font(
+            family="Arial", size=13))
+
     def Add_Line(self, one_line):
 
         if one_line.selected:
@@ -1030,7 +1043,7 @@ class MyCanvas(tk.Canvas):
             self.create_rectangle(
                 0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=get_color('AntiqueWhite'))
 
-        if not one_line.layer=='ICD10_Code':
+        if not one_line.layer == 'ICD10_Code' or not one_line.is_billable:
             if one_line.expanded:
                 self.create_text(one_line.x_offset, one_line.y, anchor='nw', tag='plus_minus{0}'.format(one_line.tag), text='-', font=tkfont.Font(
                     family="Arial", size=13))
@@ -1038,30 +1051,55 @@ class MyCanvas(tk.Canvas):
                 self.create_text(one_line.x_offset, one_line.y, anchor='nw', tag='plus_minus{0}'.format(one_line.tag), text='+', font=tkfont.Font(
                     family="Arial", size=13))
 
-        if one_line.layer=='ICD10_Code' and not one_line.is_billable:
-            self.create_text(one_line.x_offset+20, one_line.y, anchor='nw', tag='code{0}'.format(one_line.tag), text=one_line.tag, font=tkfont.Font(
-                family="Arial italic", size=13))
-        else:
-            self.create_text(one_line.x_offset+20, one_line.y, anchor='nw', tag='code{0}'.format(one_line.tag), text=one_line.tag, font=tkfont.Font(
-                family="Arial", size=13))
+        # if one_line.layer=='ICD10_Code' and not one_line.is_billable:
+        #     self.create_text(one_line.x_offset+20, one_line.y, anchor='nw', tag='code{0}'.format(one_line.tag), text=one_line.tag, font=tkfont.Font(
+        #         family="Arial italic", size=13))
+        # else:
 
-        description_text = ' -  ' + one_line.description
-        self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=description_text, font=tkfont.Font(
-        family="Arial", size=13))
+        the_code = one_line.tag
+        if len(the_code)>3:
+            the_code = one_line.tag[0:3] +'.' + one_line.tag[3:]
+
+        self.create_text(one_line.x_offset+20, one_line.y, anchor='nw', tag='code{0}'.format(one_line.tag), text=the_code, font=tkfont.Font(
+            family="Arial", size=13))
+
+        whole_description_text = ' -  ' + one_line.description
+        while len(whole_description_text)>(115-int(one_line.x_offset/6)):
+            end_spot=(115-int(one_line.x_offset/6))
+            while not whole_description_text[end_spot]==' ':
+                end_spot -= 1
+
+            #self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=description_text, font=tkfont.Font(
+            self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=whole_description_text[0:end_spot], font=tkfont.Font(
+                family="Arial", size=13))
+            
+            whole_description_text = '  ' + whole_description_text[end_spot:]
+            one_line.y+=30
+            if one_line.selected:
+                self.create_rectangle(0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=get_color('Gold'))
+            else:
+                self.create_rectangle(
+                    0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=get_color('AntiqueWhite'))
+
+        self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=whole_description_text, font=tkfont.Font(
+            family="Arial", size=13))
+
 
     def Add_Search_Results(self, search_results):
 
+        number_of_results=len(search_results)
         self.delete('all')
         y=20
-        self.create_text(10, y, anchor='nw',  text='Search Results', font=tkfont.Font(
+        title_text = str(number_of_results) + ' Results for Search Criteria'
+        self.create_text(10, y, anchor='nw',  text=title_text, font=tkfont.Font(
             family="Arial", size=20))
 
         y+=30
         for one_results in search_results:
             y += 30
-            self.create_text(10, y, anchor='nw',  text=one_results['ICD10_Code'], font=tkfont.Font(
+            self.create_text(10, y, anchor='nw',  text=one_results.ICD10_Code, font=tkfont.Font(
                 family="Arial", size=13))
-            description = ' -  ' + one_results['description']
+            description = ' -  ' + one_results.description
             self.create_text(100, y, anchor='nw',  text=description, font=tkfont.Font(
                 family="Arial", size=13))
 
