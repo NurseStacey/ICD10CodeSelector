@@ -6,7 +6,6 @@ from tkinter import font as tkfont
 from tkinter import simpledialog
 import dataclasses
 from Colors import *
-
 from tkinter import messagebox
 from tkinter import ttk
 class TextScrollCombo(tk.Frame):
@@ -807,11 +806,12 @@ class FunctionOnSelect():
         self.values = values
 
 class ListScrollCombo(tk.Frame):
-    def __init__(self, this_height, this_width, this_font, selection_made, *args, **kwargs):
+    def __init__(self, this_height, this_width, this_font, selection_made, title, *args, **kwargs):
 
 
         super().__init__(*args, **kwargs)
 
+        tk.Label(self,font=this_font, text=title).grid(row=0,column=1, columnspan=2)
         self.listbox = tk.Listbox(self, name='list_box', selectmode='single',
                                   width=this_width, font=this_font, height=this_height, exportselection=0)
 
@@ -832,6 +832,8 @@ class ListScrollCombo(tk.Frame):
         self.current_selection = 0
         self.listbox.selection_set(0)
         self.function_on_select = []
+        self.grid_rowconfigure(2, weight=1)
+
 
     def get_all_elements(self):
         return self.listbox.get(0, tk.END)
@@ -1035,13 +1037,17 @@ class MyCanvas(tk.Canvas):
         self.create_text(0, y, anchor='nw', text=the_text, font=tkfont.Font(
             family="Arial", size=13))
 
-    def Add_Line(self, one_line):
+    def Add_Line(self, one_line, row_number):
 
         if one_line.selected:
-            self.create_rectangle(0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=get_color('Gold'))
+            self.create_rectangle(0, one_line.y, 900, one_line.y+30,
+                                  tag='bg{0}'.format(one_line.tag), width=0, fill=highlight_color)
         else:
             self.create_rectangle(
-                0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=get_color('AntiqueWhite'))
+                0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=background_color)
+
+        self.create_text(5, one_line.y, anchor='nw', tag='row_number{0}'.format(one_line.tag), text=str(row_number), font=tkfont.Font(
+            family="Arial", size=13))
 
         if not one_line.layer == 'ICD10_Code' or not one_line.is_billable:
             if one_line.expanded:
@@ -1050,11 +1056,6 @@ class MyCanvas(tk.Canvas):
             else:
                 self.create_text(one_line.x_offset, one_line.y, anchor='nw', tag='plus_minus{0}'.format(one_line.tag), text='+', font=tkfont.Font(
                     family="Arial", size=13))
-
-        # if one_line.layer=='ICD10_Code' and not one_line.is_billable:
-        #     self.create_text(one_line.x_offset+20, one_line.y, anchor='nw', tag='code{0}'.format(one_line.tag), text=one_line.tag, font=tkfont.Font(
-        #         family="Arial italic", size=13))
-        # else:
 
         the_code = one_line.tag
         if len(the_code)>3:
@@ -1069,14 +1070,14 @@ class MyCanvas(tk.Canvas):
             while not whole_description_text[end_spot]==' ':
                 end_spot -= 1
 
-            #self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=description_text, font=tkfont.Font(
             self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=whole_description_text[0:end_spot], font=tkfont.Font(
                 family="Arial", size=13))
             
             whole_description_text = '  ' + whole_description_text[end_spot:]
             one_line.y+=30
             if one_line.selected:
-                self.create_rectangle(0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=get_color('Gold'))
+                self.create_rectangle(0, one_line.y, 900, one_line.y+30,
+                                      tag='bg{0}'.format(one_line.tag), width=0, fill=highlight_color)
             else:
                 self.create_rectangle(
                     0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=get_color('AntiqueWhite'))
@@ -1095,17 +1096,28 @@ class MyCanvas(tk.Canvas):
             family="Arial", size=20))
 
         y+=30
-        for one_results in search_results:
+        for one_result in search_results:
             y += 30
-            self.create_text(10, y, anchor='nw',  text=one_results.ICD10_Code, font=tkfont.Font(
-                family="Arial", size=13))
-            description = ' -  ' + one_results.description
+
+            font_text = 'Arial'
+            if not one_result.is_billable:
+                font_text += ' italic'
+            self.create_rectangle(
+                0, y, 900, y+30,  width=0, fill=get_color('AntiqueWhite'))
+
+            self.create_text(10, y, anchor='nw',  text=one_result.ICD10_Code, font=tkfont.Font(
+                family=font_text, size=13))
+            description = ' -  ' + one_result .description
             self.create_text(100, y, anchor='nw',  text=description, font=tkfont.Font(
-                family="Arial", size=13))
+                family=font_text, size=13))
 
             # if y>80000:
             #     break
         
+        while y < 900:
+            self.The_Canvas.Add_BlankLine(y)
+            y += 30
+
         self.configure(scrollregion=self.bbox("all"))
 
 class ScrollingFrame(ttk.Frame):
@@ -1114,7 +1126,7 @@ class ScrollingFrame(ttk.Frame):
         super().__init__(*args, **kwargs)
 
         #self.canvas = tk.Canvas(self)
-        self.canvas = MyCanvas(self)
+        self.canvas = MyCanvas(self, highlightthickness=3, highlightbackground="black")
         
         self.scrollbar = ttk.Scrollbar(self, orient="vertical",
                                        command=self.canvas.yview)
@@ -1127,7 +1139,7 @@ class ScrollingFrame(ttk.Frame):
         )
 
 
-        self.canvas.configure(yscrollcommand=self.scrollbar.set, height=900, width=900)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set, height=700, width=900)
 
         self.canvas.grid(row=0, column=0)
 
@@ -1135,3 +1147,164 @@ class ScrollingFrame(ttk.Frame):
         self.scrollbar.grid(row=0, column=1, sticky='ns')
 
 
+class ListScrollEntryCombo(tk.Frame):
+    def __init__(self, this_height, this_width, this_font, selection_made, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.entrybox = tk.Entry(
+            self, name='entry_box', font=this_font, width=this_width)
+
+        self.listbox = tk.Listbox(self, name='list_box', selectmode='single',
+                                  width=this_width, font=this_font, height=this_height, exportselection=0)
+
+        self.listbox.bind('<KeyRelease>', self.key_pressed)
+        self.entrybox.bind('<KeyRelease>', self.key_pressed)
+
+        self.listbox.bind('<ButtonRelease-1>', self.selection_made)
+        if not selection_made == None:
+            self.listbox.bind('<FocusOut>', selection_made)
+
+        tk.Label(self,text='Ctrl-t').grid(row=1,column=1, padx=(0,5))
+        self.entrybox.grid(row=1, column=2)
+        tk.Label(self, text='Ctrl-a').grid(row=2, column=1, padx=(0, 5))
+        self.listbox.grid(row=2, column=2, sticky="ne")
+
+    # create a Scrollbar and associate it with txt
+        scrollb = ttk.Scrollbar(self, command=self.listbox.yview)
+        scrollb.grid(row=2, column=3, sticky='ns')
+        self.listbox['yscrollcommand'] = scrollb.set
+
+        self.list_box_items = []
+        self.the_text = ''
+        self.current_selection = 0
+        self.listbox.selection_set(0)
+        self.function_on_select = []
+
+    def set_focus_entry(self):
+        self.entrybox.focus_set()
+
+    def get_all_elements(self):
+        return self.listbox.get(0, tk.END)
+
+    def set_function_on_select(self, values, function):
+        self.function_on_select.append(FunctionOnSelect(values, function))
+
+    def set_double_click(self, function):
+        self.listbox.bind('<Double-Button-1>', function)
+
+    def add_item_list(self, item_list):
+        self.clear_listbox()
+        self.list_box_items = []
+
+        for one_item in item_list:
+            self.list_box_items.append(one_item)
+            self.listbox.insert(tk.END, one_item)
+
+    def add_one_item(self, one_item):
+
+        if not one_item in self.list_box_items:
+            self.list_box_items.append(one_item)
+            self.listbox.insert(tk.END, one_item)
+
+    def get_all_selected_texts(self):
+        selections = self.listbox.curselection()
+        return_value = []
+
+        for one_selection in selections:
+            return_value.append(self.listbox.get(one_selection))
+
+        return return_value
+
+    def get_selected_text(self):
+
+        return self.listbox.get(next(iter(self.listbox.curselection()),0))
+        # selections = self.listbox.curselection()
+        # if len(selections) == 0:
+        #     return self.listbox.get(0)
+
+        # return self.listbox.get(selections[0])
+
+    def selection_made(self, e=None):
+
+        for one_select_function in self.function_on_select:
+            if self.get_selected_text() in one_select_function.values:
+                one_select_function.function_call()
+
+    def update_displayed_list(self):
+
+        self.listbox.delete(0, tk.END)
+        for x in self.list_box_items:
+            if x[:len(self.the_text)].lower() == self.the_text:
+                self.listbox.insert(tk.END,  x)
+
+        self.listbox.selection_clear(0, tk.END)
+        self.listbox.selection_set(0)
+        self.selection_made()
+
+    def get_all_items(self):
+        return self.list_box_items
+
+    def set_selection_mode(self, which):
+        self.listbox.config(selectmode=which)
+
+    def reset(self):
+        self.the_text = ''
+        self.update_displayed_list()
+
+    def key_pressed(self, e):
+
+        if e.keycode == 9:
+            return
+
+        if len(self.listbox.curselection()) == 0:
+            current_selection = 0
+        else:
+            current_selection = self.listbox.curselection()[0]
+
+        if e.keycode == 40 and current_selection < self.listbox.size():
+            current_selection += 1
+            self.listbox.selection_clear(0, tk.END)
+            self.listbox.selection_set(current_selection)
+            return
+
+        if e.keycode == 38 and current_selection > 0:
+            current_selection -= 1
+            self.listbox.selection_clear(0, tk.END)
+            self.listbox.selection_set(current_selection)
+            return
+
+        if e.char.isalpha():
+            self.the_text += e.char
+        elif e.keycode == 8:
+            self.the_text = ''
+
+        self.update_displayed_list()
+
+    def clear_listbox(self):
+        self.listbox.delete(0, tk.END)
+        self.list_box_items = []
+
+    def remove_item(self, text):
+
+        if self.listbox.get(0, tk.END) == ():
+            return
+
+        try:
+            ID = self.listbox.get(0, tk.END).index(text)
+        except ValueError:
+            return
+
+        if ID < 0:
+            return
+
+        self.listbox.delete(ID)
+        self.list_box_items.remove(text)
+
+    def set_state(self, this_state):
+        self.listbox.configure(state=this_state)
+
+    def set_selection(self, which):
+        self.listbox.selection_clear(0, tk.END)
+        new_selection = self.listbox.get(0, tk.END).index(which)
+        self.listbox.selection_set(new_selection)

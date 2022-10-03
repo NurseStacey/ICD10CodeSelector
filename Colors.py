@@ -14,6 +14,7 @@ def get_color(color_name):
             return(one_color.hex)
 
 
+
 the_colors = []
 
 the_colors.append(One_Color('white ', '#FFFFFF'))
@@ -161,3 +162,8 @@ the_colors.append(One_Color('Light Green', '#BBFFFF'))
 the_colors.append(One_Color('WhiteSmoke ', '#F5F5F5'))
 the_colors.append(One_Color('Yellow ', '#FFFF00'))
 the_colors.append(One_Color('YellowGreen ', '#9ACD32'))
+
+
+highlight_color = get_color('CornflowerBlue')
+background_color = get_color('AntiqueWhite')
+expand_color = get_color('red')

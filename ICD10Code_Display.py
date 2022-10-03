@@ -1,5 +1,6 @@
 from Colors import *
 
+
 class One_Code_Line():
     def __init__(self, x_offset, tag, description, is_billable, selected, layer, expanded):
 
@@ -25,7 +26,7 @@ class ICD10Code_DisplayClass():
         self.test_index=1
 
     def Create_Initial_Lines(self):
-        x_offset1 = 10
+        x_offset1 = 40
         for one_category in self.The_Codes.categories:
 
             self.the_lines.append(One_Code_Line(
@@ -43,7 +44,7 @@ class ICD10Code_DisplayClass():
         selected = self.the_lines[this_index].selected
         x_offset3 = self.the_lines[this_index].x_offset + 30 
 
-        number_of_codes_added = 0
+        #number_of_codes_added = 0
 
         if this_type=='sub_category':
             length_to_compare=3
@@ -52,53 +53,89 @@ class ICD10Code_DisplayClass():
 
         new_codes = []
 
-        for length_of_code in range(length_to_compare, 8):
+        #this fist bit was to make sure there were at least 40 lines with each expansion
 
-            codes_to_display=[]
-            if this_type=='sub_category':
-                codes_to_display = [x for x in self.The_Codes.all_codes if x.sub_category == tag and len(
-                    x.ICD10_Code) == length_of_code]
-            else:
-                codes_to_display = [x for x in self.The_Codes.all_codes if x.ICD10_Code[:len(tag)] == tag and len(
-                    x.ICD10_Code) == length_of_code]                
+        # for length_of_code in range(length_to_compare, 8):
 
-            will_expand_these_codes = False
-            number_of_codes_added += len(codes_to_display)
+        #     codes_to_display=[]
+        #     if this_type=='sub_category':
+        #         codes_to_display = [x for x in self.The_Codes.all_codes if x.sub_category == tag and len(
+        #             x.ICD10_Code) == length_of_code]
+        #     else:
+        #         codes_to_display = [x for x in self.The_Codes.all_codes if x.ICD10_Code[:len(tag)] == tag and len(
+        #             x.ICD10_Code) == length_of_code]                
 
-            if number_of_codes_added < 40:
-                will_expand_these_codes = True
+        #     will_expand_these_codes = False
+        #     number_of_codes_added += len(codes_to_display)
+
+        #     if number_of_codes_added < 40:
+        #         will_expand_these_codes = True
             
-            for one_ICD10_code in codes_to_display:
+        #     for one_ICD10_code in codes_to_display:
 
-                try:
-                    upper_code = next(x for x in new_codes if x in one_ICD10_code.ICD10_Code)
-                except StopIteration:
-                    upper_code=None
+        #         try:
+        #             upper_code = next(x for x in new_codes if x in one_ICD10_code.ICD10_Code)
+        #         except StopIteration:
+        #             upper_code=None
 
-                if upper_code == None:
-                    this_index += 1
-                else:
-                    this_index = self.find_tag_index(upper_code)+1
-                    new_codes.remove(upper_code)
+        #         if upper_code == None:
+        #             this_index += 1
+        #         else:
+        #             this_index = self.find_tag_index(upper_code)+1
+        #             new_codes.remove(upper_code)
                                 
-                if one_ICD10_code.selected == selected or one_ICD10_code.selected == None:
-                    one_ICD10_code.selected = None
+        #         if one_ICD10_code.selected == selected or one_ICD10_code.selected == None:
+        #             one_ICD10_code.selected = None
 
-                    self.the_lines.insert(this_index, One_Code_Line(
-                        x_offset3, one_ICD10_code.ICD10_Code, one_ICD10_code.description, one_ICD10_code.billable, selected, 'ICD10_Code',will_expand_these_codes))
-                else:
-                    self.the_lines.insert(this_index, One_Code_Line(
-                        x_offset3, one_ICD10_code.ICD10_Code, one_ICD10_code.description, one_ICD10_code.billable, one_ICD10_code.selected, 'ICD10_Code', will_expand_these_codes))
+        #             self.the_lines.insert(this_index, One_Code_Line(
+        #                 x_offset3, one_ICD10_code.ICD10_Code, one_ICD10_code.description, one_ICD10_code.is_billable, selected, 'ICD10_Code',will_expand_these_codes))
+        #         else:
+        #             self.the_lines.insert(this_index, One_Code_Line(
+        #                 x_offset3, one_ICD10_code.ICD10_Code, one_ICD10_code.description, one_ICD10_code.is_billable, one_ICD10_code.selected, 'ICD10_Code', will_expand_these_codes))
 
 
-                new_codes.append(one_ICD10_code.ICD10_Code)
+        #         new_codes.append(one_ICD10_code.ICD10_Code)
 
             
-            if number_of_codes_added >= 40:
-                break
+        #     if number_of_codes_added >= 40:
+        #         break
+        #     else:
+        #         x_offset3 += 30 
+
+
+        codes_to_display = []
+        if this_type == 'sub_category':
+            codes_to_display = [x for x in self.The_Codes.all_codes if x.sub_category == tag and len(
+                x.ICD10_Code) == length_to_compare]
+        else:
+            codes_to_display = [x for x in self.The_Codes.all_codes if x.ICD10_Code[:len(tag)] == tag and len(
+                x.ICD10_Code) == length_to_compare]
+
+        for one_ICD10_code in codes_to_display:
+
+            try:
+                upper_code = next(
+                    x for x in new_codes if x in one_ICD10_code.ICD10_Code)
+            except StopIteration:
+                upper_code = None
+
+            if upper_code == None:
+                this_index += 1
             else:
-                x_offset3 += 30 
-                
+                this_index = self.find_tag_index(upper_code)+1
+                new_codes.remove(upper_code)
+
+            if one_ICD10_code.selected == selected or one_ICD10_code.selected == None:
+                one_ICD10_code.selected = None
+
+                self.the_lines.insert(this_index, One_Code_Line(
+                    x_offset3, one_ICD10_code.ICD10_Code, one_ICD10_code.description, one_ICD10_code.is_billable, selected, 'ICD10_Code', False))
+            else:
+                self.the_lines.insert(this_index, One_Code_Line(
+                    x_offset3, one_ICD10_code.ICD10_Code, one_ICD10_code.description, one_ICD10_code.is_billable, one_ICD10_code.selected, 'ICD10_Code', False))
+
+            new_codes.append(one_ICD10_code.ICD10_Code)
+
 
     def Remove_ICD10_Lines(self, subcategory, this_type):
 
@@ -123,7 +160,7 @@ class ICD10Code_DisplayClass():
         self.the_lines = [x for x in self.the_lines if not x.tag in these_tags]
 
     def Add_SubCategory_Lines(self, category):
-        x_offset2 = 50
+        x_offset2 = 80
 
         index = 0
         for index in range(len(self.the_lines)):
@@ -160,15 +197,20 @@ class ICD10Code_DisplayClass():
 
         self.The_Canvas.configure(scrollregion=self.The_Canvas.bbox("all"))
 
+    def get_number_rows(self):
+
+        return len(self.the_lines)
+        
     def populate_screen(self):
 
         self.The_Canvas.delete('all')
         next_y=10
 
-        for one_line in self.the_lines:
-            
+        for index in range(len(self.the_lines)):
+        #for one_line in self.the_lines:
+            one_line = self.the_lines[index]   
             one_line.y = next_y
-            self.The_Canvas.Add_Line(one_line)
+            self.The_Canvas.Add_Line(one_line, index+1)
             
             next_y = one_line.y +30
 
@@ -185,39 +227,49 @@ class ICD10Code_DisplayClass():
         this_code = next(
             x for x in self.The_Codes.all_codes if x.ICD10_Code == this_tag)
 
+        these_codes = [
+            x for x in self.The_Codes.all_codes if this_tag in x.ICD10_Code]
+
         if this_line.selected:
             this_code.selected = False
             this_line.selected = False
             self.The_Canvas.itemconfig(
-                bg_tag, fill=get_color('AntiqueWhite'))
+                bg_tag, fill=background_color)
         else:
             this_code.selected = True
             this_line.selected = True
-            self.The_Canvas.itemconfig(bg_tag, fill=get_color('Gold'))
+            self.The_Canvas.itemconfig(bg_tag, fill=highlight_color)
 
-    def sub_category_selected(self, this_tag, this_line, bg_tag):
+    def sub_category_selected(self, this_tag, this_line, bg_tag, type):
 
-        these_codes = [
-            x for x in self.The_Codes.all_codes if x.sub_category == this_tag]
+        if type=='sub_category':
+            these_codes = [
+                x for x in self.The_Codes.all_codes if x.sub_category == this_tag]
+            this_code = next(
+                x for x in self.The_Codes.sub_categories if x.range_string == this_tag)                
+        else:
+            these_codes = [
+                x for x in self.The_Codes.all_codes if this_tag in x.ICD10_Code] 
+            this_code = next(
+                x for x in self.The_Codes.all_codes if x.ICD10_Code == this_tag)           
 
-        this_codes = next(
-            x for x in self.The_Codes.sub_categories if x.range_string == this_tag)
+
 
         selected = True
-        new_color = 'Gold'
+        new_color = highlight_color
 
         if this_line.selected:
             selected = False
-            new_color = 'AntiqueWhite'
+            new_color = background_color
             
-        this_codes.selected = selected
+        this_code.selected = selected
         this_line.selected = selected
         self.The_Canvas.itemconfig(
-            bg_tag, fill=get_color(new_color))
+            bg_tag, fill=new_color)
         if this_line.expanded:
             for one_code in these_codes:
                 self.The_Canvas.itemconfig(
-                    'bg'+one_code.ICD10_Code, fill=get_color(new_color))
+                    'bg'+one_code.ICD10_Code, fill=new_color)
             else:
                 for one_icd10_code in [x for x in self.The_Codes.all_codes if x.sub_category == this_line.tag]:
                     one_icd10_code.expanded = None
@@ -228,18 +280,18 @@ class ICD10Code_DisplayClass():
             x for x in self.The_Codes.sub_categories if x.category == this_tag]
 
         selected = True
-        new_color = 'Gold'
+        new_color = highlight_color
         this_code = next(
             x for x in self.The_Codes.categories if x.range_string == this_tag)
 
         if this_line.selected:
             selected = False
-            new_color = 'AntiqueWhite'
+            new_color = background_color
 
 #        if this_line.selected:
 #            this_line.selected = False
         self.The_Canvas.itemconfig(
-            bg_tag, fill=get_color(new_color))
+            bg_tag, fill=new_color)
 
         this_line.selected = selected
         this_code.selected = selected
@@ -248,14 +300,14 @@ class ICD10Code_DisplayClass():
                 one_sub_category_line = next(
                     x for x in self.the_lines if x.tag == this_tag)
                 self.The_Canvas.itemconfig(
-                    'bg'+one_code.range_string, fill=get_color(new_color))
+                    'bg'+one_code.range_string, fill=new_color)
                 one_code.selected = None
                 one_sub_category_line.selected = selected
 
                 if one_sub_category_line.expanded:
-                    for one_icd10_code in [x for x in self.The_Codes.all_codes if x.sub_category == one_code.tag]:
+                    for one_icd10_code in [x for x in self.The_Codes.all_codes if x.sub_category == one_sub_category_line.tag]:
                         self.The_Canvas.itemconfig(
-                            'bg'+one_icd10_code.range_string, fill=get_color(new_color))
+                            'bg'+one_icd10_code.range_string, fill=new_color)
                         one_icd10_code.selected = None
                         one_icd10_code_line = next(
                             x for x in self.the_lines if x.tag == this_tag)
@@ -320,10 +372,12 @@ class ICD10Code_DisplayClass():
                 self.category_selected(this_tag, this_line, bg_tag)
 
             elif this_line.layer=='sub_category':
-                self.sub_category_selected(this_tag, this_line, bg_tag)
+                self.sub_category_selected(
+                    this_tag, this_line, bg_tag, 'sub_category')
   
             else:
-                self.ICD10_code_selected(this_tag, this_line, bg_tag)
+                self.sub_category_selected(
+                    this_tag, this_line, bg_tag, 'ICD_10Code')
 
         pass
 

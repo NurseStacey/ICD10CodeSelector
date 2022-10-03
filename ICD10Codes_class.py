@@ -3,12 +3,13 @@ import copy
 from dataclasses import dataclass
 import pickle
 import os
+import re
 
 @dataclass
 class One_ICD10_Code():
     ICD10_Code:str
     description:str
-    billable:bool
+    is_billable:bool
     category:str
     sub_category:str
     selected:bool
@@ -107,7 +108,85 @@ class All_Codes_Class():
 
         this_file.close()
 
-    def Search(self, search_term):
+        this_file = open('initial_word_list.txt', 'r')
+        self.initial_word_list = []
+
+        for one_line in this_file.readlines():
+            self.initial_word_list.append(one_line.replace('\n',''))
+
+        self.initial_word_list.sort()
+        this_file.close()
+
+    def Create_Initial_Word_List(self):
+        possible_words = []
+
+        preposition_file = open('Prepositions.txt','r')
+        prepositions = []
+        for one_line in preposition_file.readlines():
+            prepositions.append(one_line.replace('\n',''))
+
+        for one_code in self.all_codes:
+            
+            for one_word in one_code.description.split():
+                one_word=re.sub('[().\%[\]\,]', '', one_word)
+
+                if len(one_word)==0:
+                    break
+
+                while not one_word[0].isalnum() and len(one_word)>3:
+                    one_word = one_word[1:]
+
+                percent_alpha = len([x for x in one_word if x.isalpha()])/len(one_word)
+                    
+                one_word = one_word.lower()
+                #this_word = ''.join(filter(str.isalpha, one_word)).lower()
+
+                if one_word not in prepositions and len(one_word)>3 and one_word not in possible_words and percent_alpha>0.8:
+                    possible_words.append(one_word)
+
+
+
+        possible_words.sort()
+        this_file=open('initial_word_list.txt','w')
+        for one_word in possible_words:
+            this_file.write(one_word+'\n')
+        
+        this_file.close()
+
+    def Get_Words(self, which_categories=[]):
+
+        if which_categories==[]:
+            return self.initial_word_list
+
+        possible_words = []
+
+        for one_code in self.all_codes:
+            
+            for one_word in one_code.description.split():
+                one_word=re.sub('[().\%[\]],', '', one_word)
+
+                if len(one_word)==0:
+                    break
+
+                while not one_word[0].isalnum():
+                    one_word = one_word[1:]
+
+                percent_alpha = len([x for x in one_word if x.isalpha()])/len(one_word)
+                    
+                one_word = one_word.lower()
+                #this_word = ''.join(filter(str.isalpha, one_word)).lower()
+
+                if len(one_word)>3 and one_word not in possible_words and percent_alpha>0.8:
+                    possible_words.append(one_word)
+
+
+
+        possible_words.sort()
+
+
+        return possible_words
+
+    def Search(self, search_terms):
 
         selected_categories = [x.range_string for x in self.categories if x.selected]
         selected_sub_categories = [
@@ -120,18 +199,31 @@ class All_Codes_Class():
             self.all_codes = [x for x in self.all_codes if (x.category in selected_categories) or (x.sub_category in selected_sub_categories)]
         
         search_results = []
+        not_search_results = []
 
-        for index in range(len(search_term)):
+        for one_code in self.all_codes:
+            add_code=True
+            for one_search_term in search_terms:
+                if one_search_term.lower() not in one_code.description.lower():
+                    add_code=False
+                    break
+            if add_code:
+                search_results.append(one_code)
+        # for one_search_term in search_terms:
+        #     not_search_results = not_search_results + [x for x in self.all_codes if one_search_term.lower() not in x.description.lower() and x not in search_results]
 
-            search_results = search_results + \
-                [x for x in self.all_codes if search_term[:len(
-                    search_term)-index].lower() in x.description.lower()]
+        # search_results =[x for x in self.all_codes if not x in not_search_results]            
+        # for index in range(len(search_term)):
 
-            self.all_codes = [x for x in self.all_codes if search_term[:len(
-                search_term)-index].lower() not in x.description.lower()]
+        #     search_results = search_results + \
+        #         [x for x in self.all_codes if search_term[:len(
+        #             search_term)-index].lower() in x.description.lower()]
 
-            if (len(search_term)-index) == 5:
-                break
+        #     self.all_codes = [x for x in self.all_codes if search_term[:len(
+        #         search_term)-index].lower() not in x.description.lower()]
+
+        #     if (len(search_term)-index) == 5:
+        #         break
 
         with open('temporary_all_data.pkl', 'rb') as f:
             self.all_codes = pickle.load(f)
