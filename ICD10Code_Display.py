@@ -15,10 +15,12 @@ class One_Code_Line():
         self.layer = layer
 
 class ICD10Code_DisplayClass():
-    def __init__(self, The_Codes, The_Canvas):
+    def __init__(self, The_Codes, The_Canvas, SearchFrame_Obj):
 
         self.The_Codes = The_Codes
         self.The_Canvas = The_Canvas
+        self.SearchFrame_Obj = SearchFrame_Obj
+
         self.the_lines=[]
         self.The_Canvas.set_button_click_event(self.single_click)
         self.Create_Initial_Lines()
@@ -227,9 +229,6 @@ class ICD10Code_DisplayClass():
         this_code = next(
             x for x in self.The_Codes.all_codes if x.ICD10_Code == this_tag)
 
-        these_codes = [
-            x for x in self.The_Codes.all_codes if this_tag in x.ICD10_Code]
-
         if this_line.selected:
             this_code.selected = False
             this_line.selected = False
@@ -239,6 +238,11 @@ class ICD10Code_DisplayClass():
             this_code.selected = True
             this_line.selected = True
             self.The_Canvas.itemconfig(bg_tag, fill=highlight_color)
+
+        if this_line.selected:
+            self.SearchFrame_Obj.Add_Category(this_code.category)
+        else:
+            self.SearchFrame_Obj.Remove_Category(this_code.category)
 
     def sub_category_selected(self, this_tag, this_line, bg_tag, type):
 
@@ -253,15 +257,18 @@ class ICD10Code_DisplayClass():
             this_code = next(
                 x for x in self.The_Codes.all_codes if x.ICD10_Code == this_tag)           
 
-
-
         selected = True
         new_color = highlight_color
 
         if this_line.selected:
             selected = False
             new_color = background_color
-            
+
+        if selected:
+            self.SearchFrame_Obj.Add_Category(this_code.category)
+        else:
+            self.SearchFrame_Obj.Remove_Category(this_code.category)
+
         this_code.selected = selected
         this_line.selected = selected
         self.The_Canvas.itemconfig(
@@ -275,6 +282,7 @@ class ICD10Code_DisplayClass():
                     one_icd10_code.expanded = None
 
     def category_selected(self, this_tag, this_line, bg_tag):
+        
 
         these_codes = [
             x for x in self.The_Codes.sub_categories if x.category == this_tag]
@@ -288,6 +296,10 @@ class ICD10Code_DisplayClass():
             selected = False
             new_color = background_color
 
+        if selected:
+            self.SearchFrame_Obj.Add_Category(this_tag)
+        else:
+            self.SearchFrame_Obj.Remove_Category(this_tag)
 #        if this_line.selected:
 #            this_line.selected = False
         self.The_Canvas.itemconfig(
@@ -323,35 +335,64 @@ class ICD10Code_DisplayClass():
         this_tag = tag_clicked.replace('plus_minus', '')
         this_line = next(x for x in self.the_lines if x.tag == this_tag)
 
+
         if this_line.layer == 'category':
             if self.The_Canvas.itemcget(tag_clicked, 'text') == '+':
                 
                 this_line.expanded = True
                 self.Add_SubCategory_Lines(this_tag)
             else:
-                
                 this_line.expanded = False
                 self.Remove_SubCategory_Lines(this_tag)
         elif this_line.layer == 'sub_category':
+            this_code = next(
+                    x for x in self.The_Codes.sub_categories if x.range_string == this_tag)  
             if self.The_Canvas.itemcget(tag_clicked, 'text') == '+':
-                #self.The_Canvas.itemconfig(tag_clicked, text='-')
                 this_line.expanded = True
                 self.Add_ICD10_Lines(this_tag, 'sub_category')
             else:
-                #self.The_Canvas.itemconfig(tag_clicked, text='+')
                 this_line.expanded = False
                 self.Remove_ICD10_Lines(this_tag, 'sub_category')
         else:
+            this_code = next(
+                x for x in self.The_Codes.all_codes if x.range_string == this_tag)
             if self.The_Canvas.itemcget(tag_clicked, 'text') == '+':
                 this_line.expanded = True
                 self.Add_ICD10_Lines(this_tag, 'icd10_code')
             else:
-                #self.The_Canvas.itemconfig(tag_clicked, text='+')
                 this_line.expanded = False
                 self.Remove_ICD10_Lines(this_tag, 'icd10_code')
         
 
         self.populate_screen()
+
+    def expand_this_row(self, which_row):
+
+        this_line = self.the_lines[which_row-1]
+        tag = 'plus_minus{0}'.format(this_line.tag)
+        self.plus_minus_process(tag)
+
+    def select_this_row(self, which_row):
+        this_line = self.the_lines[which_row-1]
+        tag = 'code{0}'.format(this_line.tag)
+        self.code_selected_proces(tag)
+
+    def code_selected_proces(self, tag_clicked):
+        this_tag = tag_clicked.replace('code', '')
+        this_line = next(x for x in self.the_lines if x.tag == this_tag)
+        bg_tag = tag_clicked.replace('code', 'bg')
+
+        if this_line.layer == 'category':
+            self.category_selected(this_tag, this_line, bg_tag)
+
+        elif this_line.layer == 'sub_category':
+            self.sub_category_selected(
+                this_tag, this_line, bg_tag, 'sub_category')
+
+        else:
+            self.sub_category_selected(
+                this_tag, this_line, bg_tag, 'ICD_10Code')
+
 
     def single_click(self, event):
         
@@ -363,23 +404,10 @@ class ICD10Code_DisplayClass():
         if 'plus_minus' in tag_clicked:
             self.plus_minus_process(tag_clicked)
         elif 'code' in tag_clicked:
+            self.code_selected_proces(tag_clicked)
 
-            this_tag = tag_clicked.replace('code', '')
-            this_line = next(x for x in self.the_lines if x.tag == this_tag)
-            bg_tag = tag_clicked.replace('code', 'bg')
 
-            if this_line.layer=='category':
-                self.category_selected(this_tag, this_line, bg_tag)
 
-            elif this_line.layer=='sub_category':
-                self.sub_category_selected(
-                    this_tag, this_line, bg_tag, 'sub_category')
-  
-            else:
-                self.sub_category_selected(
-                    this_tag, this_line, bg_tag, 'ICD_10Code')
-
-        pass
 
     def get_tag(self, event):
 

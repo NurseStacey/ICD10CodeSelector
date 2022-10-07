@@ -817,6 +817,8 @@ class ListScrollCombo(tk.Frame):
 
         self.listbox.bind('<KeyRelease>', self.key_pressed)
         self.listbox.bind('<ButtonRelease-1>', self.selection_made)
+        self.listbox.bind('<Double-Button-1>', self.double_click)
+        
         if not selection_made == None:
             self.listbox.bind('<FocusOut>', selection_made)
 
@@ -834,6 +836,14 @@ class ListScrollCombo(tk.Frame):
         self.function_on_select = []
         self.grid_rowconfigure(2, weight=1)
 
+    def double_click(self, entry):
+
+        ID = self.listbox.curselection()[0]
+        text = self.listbox.get(ID)
+        self.listbox.delete(ID)
+        self.list_box_items.remove(text)
+
+        return
 
     def get_all_elements(self):
         return self.listbox.get(0, tk.END)
@@ -841,8 +851,8 @@ class ListScrollCombo(tk.Frame):
     def set_function_on_select(self, values, function):
         self.function_on_select.append(FunctionOnSelect(values, function))
 
-    def set_double_click(self, function):
-        self.listbox.bind('<Double-Button-1>', function)
+    # def set_double_click(self, function):
+    #     self.listbox.bind('<Double-Button-1>', function)
 
     def add_item_list(self, item_list):
         self.clear_listbox()
@@ -1080,7 +1090,7 @@ class MyCanvas(tk.Canvas):
                                       tag='bg{0}'.format(one_line.tag), width=0, fill=highlight_color)
             else:
                 self.create_rectangle(
-                    0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=get_color('AntiqueWhite'))
+                    0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=background_color)
 
         self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=whole_description_text, font=tkfont.Font(
             family="Arial", size=13))
@@ -1107,15 +1117,28 @@ class MyCanvas(tk.Canvas):
 
             self.create_text(10, y, anchor='nw',  text=one_result.ICD10_Code, font=tkfont.Font(
                 family=font_text, size=13))
-            description = ' -  ' + one_result .description
-            self.create_text(100, y, anchor='nw',  text=description, font=tkfont.Font(
-                family=font_text, size=13))
 
-            # if y>80000:
-            #     break
+            whole_description_text = ' -  ' + one_result.description
+            which_line=0
+            while len(whole_description_text) > (112):
+                end_spot = 112
+                while not whole_description_text[end_spot] == ' ':
+                    end_spot -= 1
+
+                self.create_text(70, y, anchor='nw', tag='description{0}{1}'.format(which_line, one_result.ICD10_Code), text=whole_description_text[0:end_spot], font=tkfont.Font(
+                    family="Arial", size=13))
+
+                which_line+=1
+                whole_description_text = '  ' + whole_description_text[end_spot:]
+                y += 30
+                self.create_rectangle(
+                    0, y, 900, y+30,   width=0, fill=background_color)
+
+            self.create_text(70, y, anchor='nw', tag='description{0}{1}'.format(which_line, one_result.ICD10_Code).format(whole_description_text), text=whole_description_text, font=tkfont.Font(
+                family="Arial", size=13))
         
         while y < 900:
-            self.The_Canvas.Add_BlankLine(y)
+            self.Add_BlankLine(y)
             y += 30
 
         self.configure(scrollregion=self.bbox("all"))
@@ -1254,6 +1277,9 @@ class ListScrollEntryCombo(tk.Frame):
 
     def key_pressed(self, e):
 
+        if e.state==4:
+            return
+
         if e.keycode == 9:
             return
 
@@ -1274,10 +1300,11 @@ class ListScrollEntryCombo(tk.Frame):
             self.listbox.selection_set(current_selection)
             return
 
-        if e.char.isalpha():
-            self.the_text += e.char
-        elif e.keycode == 8:
-            self.the_text = ''
+        self.the_text = self.entrybox.get()
+        # if e.char.isalpha():
+        #     self.the_text += e.char
+        # elif e.keycode == 8:
+        #     self.the_text = self.the_text[:max(0, len(self.the_text)-1)]
 
         self.update_displayed_list()
 

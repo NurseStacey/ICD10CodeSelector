@@ -14,6 +14,11 @@ class One_ICD10_Code():
     sub_category:str
     selected:bool
 
+@dataclass
+class One_Word():
+    the_word:str
+    the_categories:list[str]
+
 class Simple_Code_Class():
     def __init__(self, code_string):
         self.code_string = code_string
@@ -112,10 +117,17 @@ class All_Codes_Class():
         self.initial_word_list = []
 
         for one_line in this_file.readlines():
-            self.initial_word_list.append(one_line.replace('\n',''))
+            one_line = one_line.replace('\n','')
+            the_pieces = one_line.split(',')
+            this_word = One_Word(the_pieces[0],the_pieces[1:])
 
-        self.initial_word_list.sort()
+            self.initial_word_list.append(this_word)
+
+        self.initial_word_list.sort(key = lambda x: x.the_word)
+        
         this_file.close()
+
+        #self.Create_Initial_Word_List()
 
     def Create_Initial_Word_List(self):
         possible_words = []
@@ -149,39 +161,54 @@ class All_Codes_Class():
         possible_words.sort()
         this_file=open('initial_word_list.txt','w')
         for one_word in possible_words:
-            this_file.write(one_word+'\n')
-        
+            this_file.write(one_word)
+
+            which_categories = [x.category for x in self.all_codes if one_word in x.description.lower()]
+            which_categories = [*set(which_categories)]
+            for one_category in which_categories:
+                this_file.write(',' + one_category)
+
+            this_file.write('\n')
+
+
         this_file.close()
 
     def Get_Words(self, which_categories=[]):
 
         if which_categories==[]:
-            return self.initial_word_list
+            return [x.the_word for x in self.initial_word_list]
 
-        possible_words = []
+        return_list = []
+        for one_category in which_categories:
+            return_list = return_list + [x.the_word for x in self.initial_word_list if one_category in x.the_categories]
 
-        for one_code in self.all_codes:
+        return_list = [*set(return_list)]
+        
+        return return_list
+        # possible_words = []
+
+        # for one_code in self.all_codes:
             
-            for one_word in one_code.description.split():
-                one_word=re.sub('[().\%[\]],', '', one_word)
+        #     for one_word in one_code.description.split():
+        #         one_word=re.sub('[().\%[\]],', '', one_word)
 
-                if len(one_word)==0:
-                    break
+        #         if len(one_word)==0:
+        #             break
 
-                while not one_word[0].isalnum():
-                    one_word = one_word[1:]
+        #         while not one_word[0].isalnum():
+        #             one_word = one_word[1:]
 
-                percent_alpha = len([x for x in one_word if x.isalpha()])/len(one_word)
+        #         percent_alpha = len([x for x in one_word if x.isalpha()])/len(one_word)
                     
-                one_word = one_word.lower()
-                #this_word = ''.join(filter(str.isalpha, one_word)).lower()
+        #         one_word = one_word.lower()
+        #         #this_word = ''.join(filter(str.isalpha, one_word)).lower()
 
-                if len(one_word)>3 and one_word not in possible_words and percent_alpha>0.8:
-                    possible_words.append(one_word)
+        #         if len(one_word)>3 and one_word not in possible_words and percent_alpha>0.8:
+        #             possible_words.append(one_word)
 
 
 
-        possible_words.sort()
+        # possible_words.sort()
 
 
         return possible_words

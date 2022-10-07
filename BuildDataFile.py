@@ -116,21 +116,5 @@ dict_labels = ['range_string', 'lower_boundary',
 
 # this_file.close()
 
-this_file = open('prepositions.txt','r')
 
-final_word_list = []
-for one_line in this_file.readlines():
-
-    one_line=one_line.replace('\n','')
-    if ' ' not in one_line and next((x for x in final_word_list if x==one_line),None)==None:
-        final_word_list.append(one_line)
-
-
-this_file.close()
-
-this_file = open('prepositions.txt','w')
-for one_line in final_word_list:
-    this_file.write(one_line.lower()+'\n')
-
-this_file.close()
     
