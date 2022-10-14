@@ -7,11 +7,14 @@ from SearchFrame import *
 from datetime import datetime
 from tkinter import messagebox
 
+
+
 def test_nothing():
     ICD10Code_DisplayObj.Add_1000_dummy_lines()
 
 
 def Raise_Full_List(e=None):
+    ICD10Code_DisplayObj.replace_codes(The_Codes)
     ICD10Code_DisplayObj.populate_screen()
 
 
@@ -24,13 +27,16 @@ def which_row_set_focus(e=None):
 
 def Search_Button(e=None):
 
-    add_search_term()
+    #add_search_term()
     the_times=[]
     #the_times.append(datetime.now())
     search_results = The_Codes.Search(
         SearchFrame_Obj.Get_All_Search_Text())
+
     #the_times.append(datetime.now())
-    The_Canvas.Add_Search_Results(search_results)
+    ICD10Code_DisplayObj.replace_codes(search_results)
+    ICD10Code_DisplayObj.populate_screen()
+    #The_Canvas.Add_Search_Results(search_results)
     #the_times.append(datetime.now())
     # for one_time in the_times:
     #     print("Time:", one_time.strftime('%H:%M:%S.%f'))
@@ -69,6 +75,7 @@ def select_row(e):
 def only_digits(char):
     return char.isdigit()
 
+
 The_Window = tk.Tk()
 The_Window.title('ICD 10 Code Selector')
 
@@ -76,8 +83,9 @@ The_Canvas_Frame = ScrollingFrame(The_Window)
 The_Canvas_Frame.grid(row=1, column=1, sticky='news')
 
 The_Canvas = The_Canvas_Frame.canvas
+
 The_Codes = All_Codes_Class()
-#The_Codes.Create_Initial_Word_List()
+The_Codes.Load_Big_Data()
 
 SearchFrame_Obj = SearchFrame_Class(The_Window)
 SearchFrame_Obj.Set_Codes(The_Codes)
@@ -91,8 +99,6 @@ ICD10Code_DisplayObj = ICD10Code_DisplayClass(
     The_Codes, The_Canvas, SearchFrame_Obj)
 
 ICD10Code_DisplayObj.populate_screen()
-#ICD10Code_DisplayObj.populate_screen_test()
-
 
 
 Canvas_Controls = tk.Frame(The_Window)

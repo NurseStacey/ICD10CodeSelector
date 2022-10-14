@@ -61,21 +61,32 @@ class All_Codes_Class():
     def __init__(self):
 
         self.all_codes = []
+        self.categories = []
+        self.sub_categories = []
+        self.initial_word_list = []
 
-        this_file = open('my_ICD10_file.txt','r')
+    def set_sub_categories(self, these_sub_categories):
+        self.sub_categories = these_sub_categories
+
+    def set_categories(self, these_categories):
+        self.categories=these_categories
+
+    def set_codes(self, search_results):
+        self.all_codes=search_results
+
+    def set_initial_word_list(self, this_initial_word_list):
+        self.initial_word_list = this_initial_word_list
+
+    def Load_Big_Data(self):
+
+        this_file = open('my_ICD10_file.txt', 'r')
 
         for one_line in this_file.readlines():
-            
-            this_code_data = one_line.replace('\n','').split('@')
-
-            # if len(this_code_data[0])>3:
-            #     this_code_data[0] = this_code_data[0][:3] + '.' + this_code_data[0][3:]
-
-            self.all_codes.append(One_ICD10_Code(this_code_data[0], this_code_data[1], this_code_data[2] == '1', this_code_data[3], this_code_data[4], False))
+            this_code_data = one_line.replace('\n', '').split('@')
+            self.all_codes.append(One_ICD10_Code(
+                this_code_data[0], this_code_data[1], this_code_data[2] == '1', this_code_data[3], this_code_data[4], False))
 
         this_file.close()
-
-        self.categories = []
 
         this_file = open('General_Categories.txt', 'r')
 
@@ -90,9 +101,6 @@ class All_Codes_Class():
 
         this_file.close()
 
-
-        self.sub_categories = []
-
         this_file = open('Subcategories.txt', 'r')
 
         for one_line in this_file.readlines():
@@ -101,7 +109,7 @@ class All_Codes_Class():
             lower_boundary = Simple_Code_Class(range_partitioned[0])
             upper_boundary = Simple_Code_Class(range_partitioned[2])
 
-            this_category=None
+            this_category = None
             for one_category in self.categories:
                 if IsAGreaterThanB_ICD10code(lower_boundary, one_category.lower_boundary) or lower_boundary.code_string == one_category.lower_boundary.code_string:
                     if not IsAGreaterThanB_ICD10code(upper_boundary, one_category.upper_boundary):
@@ -114,20 +122,17 @@ class All_Codes_Class():
         this_file.close()
 
         this_file = open('initial_word_list.txt', 'r')
-        self.initial_word_list = []
 
         for one_line in this_file.readlines():
-            one_line = one_line.replace('\n','')
+            one_line = one_line.replace('\n', '')
             the_pieces = one_line.split(',')
-            this_word = One_Word(the_pieces[0],the_pieces[1:])
+            this_word = One_Word(the_pieces[0], the_pieces[1:])
 
             self.initial_word_list.append(this_word)
 
-        self.initial_word_list.sort(key = lambda x: x.the_word)
-        
-        this_file.close()
+        self.initial_word_list.sort(key=lambda x: x.the_word)
 
-        #self.Create_Initial_Word_List()
+        this_file.close()
 
     def Create_Initial_Word_List(self):
         possible_words = []
@@ -153,7 +158,7 @@ class All_Codes_Class():
                 one_word = one_word.lower()
                 #this_word = ''.join(filter(str.isalpha, one_word)).lower()
 
-                if one_word not in prepositions and len(one_word)>3 and one_word not in possible_words and percent_alpha>0.8:
+                if one_word not in prepositions and len(one_word)>2 and one_word not in possible_words and percent_alpha>0.8:
                     possible_words.append(one_word)
 
 
@@ -184,51 +189,31 @@ class All_Codes_Class():
 
         return_list = [*set(return_list)]
         
+        return_list.sort()
+        
         return return_list
-        # possible_words = []
-
-        # for one_code in self.all_codes:
-            
-        #     for one_word in one_code.description.split():
-        #         one_word=re.sub('[().\%[\]],', '', one_word)
-
-        #         if len(one_word)==0:
-        #             break
-
-        #         while not one_word[0].isalnum():
-        #             one_word = one_word[1:]
-
-        #         percent_alpha = len([x for x in one_word if x.isalpha()])/len(one_word)
-                    
-        #         one_word = one_word.lower()
-        #         #this_word = ''.join(filter(str.isalpha, one_word)).lower()
-
-        #         if len(one_word)>3 and one_word not in possible_words and percent_alpha>0.8:
-        #             possible_words.append(one_word)
-
-
-
-        # possible_words.sort()
-
-
-        return possible_words
-
+    
     def Search(self, search_terms):
 
-        selected_categories = [x.range_string for x in self.categories if x.selected]
-        selected_sub_categories = [
-            x.range_string for x in self.sub_categories if x.selected]
+        # selected_categories = [x.range_string for x in self.categories if x.selected]
+        # selected_sub_categories = [
+        #     x.range_string for x in self.sub_categories if x.selected]
 
-        with open('temporary_all_data.pkl', 'wb') as f:
-            pickle.dump(self.all_codes, f)
+        # with open('temporary_all_data.pkl', 'wb') as f:
+        #     pickle.dump(self.all_codes, f)
 
-        if not selected_sub_categories==[] or not selected_categories==[]:
-            self.all_codes = [x for x in self.all_codes if (x.category in selected_categories) or (x.sub_category in selected_sub_categories)]
+        # if not selected_sub_categories==[] or not selected_categories==[]:
+        #     self.all_codes = [x for x in self.all_codes if (x.category in selected_categories) or (x.sub_category in selected_sub_categories)]
         
         search_results = []
-        not_search_results = []
 
-        for one_code in self.all_codes:
+        list_to_search = [x for x in self.all_codes if x.selected]
+        codes_in_list = []
+
+        if list_to_search == []:
+            list_to_search = self.all_codes
+
+        for one_code in list_to_search:
             add_code=True
             for one_search_term in search_terms:
                 if one_search_term.lower() not in one_code.description.lower():
@@ -236,27 +221,41 @@ class All_Codes_Class():
                     break
             if add_code:
                 search_results.append(one_code)
-        # for one_search_term in search_terms:
-        #     not_search_results = not_search_results + [x for x in self.all_codes if one_search_term.lower() not in x.description.lower() and x not in search_results]
+                codes_in_list.append(one_code.ICD10_Code)
 
-        # search_results =[x for x in self.all_codes if not x in not_search_results]            
-        # for index in range(len(search_term)):
 
-        #     search_results = search_results + \
-        #         [x for x in self.all_codes if search_term[:len(
-        #             search_term)-index].lower() in x.description.lower()]
+        # with open('temporary_all_data.pkl', 'rb') as f:
+        #     self.all_codes = pickle.load(f)
 
-        #     self.all_codes = [x for x in self.all_codes if search_term[:len(
-        #         search_term)-index].lower() not in x.description.lower()]
+        # os.remove('temporary_all_data.pkl')
 
-        #     if (len(search_term)-index) == 5:
-        #         break
+        these_categories = [x for x in self.categories if x.range_string in [
+            y.category for y in search_results]]
+        these_sub_categories = [x for x in self.sub_categories if x.range_string in [
+            y.sub_category for y in search_results]]
 
-        with open('temporary_all_data.pkl', 'rb') as f:
-            self.all_codes = pickle.load(f)
+        this_initial_word_list = [x for x in self.initial_word_list if not [
+            y for y in x.the_categories if y in [z.range_string for z in these_categories]] == []]
 
-        os.remove('temporary_all_data.pkl')
+        codes_added = []
 
-        return search_results
+        for one_code in codes_in_list:
+            for index in reversed(range(3,len(one_code))):
+                if not one_code[:index] in codes_in_list and not one_code[:index] in codes_added:
+                    this_code = next(
+                        (x for x in self.all_codes if x.ICD10_Code == one_code[:index]), None)
+                    if not this_code==None:
+                        search_results.append(this_code)
+                        codes_added.append(this_code.ICD10_Code)
+
+                
+
+        search_results_objects = All_Codes_Class()
+        search_results_objects.set_categories(these_categories)
+        search_results_objects.set_sub_categories(these_sub_categories)
+        search_results_objects.set_codes(search_results)
+        search_results_objects.set_initial_word_list(this_initial_word_list)
+            
+        return search_results_objects
 
 

@@ -8,7 +8,8 @@ class One_Code_Line():
         self.is_billable = is_billable
         self.description = description
         #normally I hate using one letter for a variable this but it's only cartesian coordinates anyway
-        self.y = 0
+        self.y1 = 0
+        self.y2 = 0
         self.x_offset = x_offset
         self.expanded = expanded
         self.selected = selected
@@ -25,7 +26,11 @@ class ICD10Code_DisplayClass():
         self.The_Canvas.set_button_click_event(self.single_click)
         self.Create_Initial_Lines()
 
-        self.test_index=1
+
+    def replace_codes(self, The_Codes):
+        self.The_Codes = The_Codes
+        self.the_lines = []
+        self.Create_Initial_Lines()
 
     def Create_Initial_Lines(self):
         x_offset1 = 40
@@ -46,64 +51,12 @@ class ICD10Code_DisplayClass():
         selected = self.the_lines[this_index].selected
         x_offset3 = self.the_lines[this_index].x_offset + 30 
 
-        #number_of_codes_added = 0
-
         if this_type=='sub_category':
             length_to_compare=3
         else:
             length_to_compare = len(tag)+1
 
         new_codes = []
-
-        #this fist bit was to make sure there were at least 40 lines with each expansion
-
-        # for length_of_code in range(length_to_compare, 8):
-
-        #     codes_to_display=[]
-        #     if this_type=='sub_category':
-        #         codes_to_display = [x for x in self.The_Codes.all_codes if x.sub_category == tag and len(
-        #             x.ICD10_Code) == length_of_code]
-        #     else:
-        #         codes_to_display = [x for x in self.The_Codes.all_codes if x.ICD10_Code[:len(tag)] == tag and len(
-        #             x.ICD10_Code) == length_of_code]                
-
-        #     will_expand_these_codes = False
-        #     number_of_codes_added += len(codes_to_display)
-
-        #     if number_of_codes_added < 40:
-        #         will_expand_these_codes = True
-            
-        #     for one_ICD10_code in codes_to_display:
-
-        #         try:
-        #             upper_code = next(x for x in new_codes if x in one_ICD10_code.ICD10_Code)
-        #         except StopIteration:
-        #             upper_code=None
-
-        #         if upper_code == None:
-        #             this_index += 1
-        #         else:
-        #             this_index = self.find_tag_index(upper_code)+1
-        #             new_codes.remove(upper_code)
-                                
-        #         if one_ICD10_code.selected == selected or one_ICD10_code.selected == None:
-        #             one_ICD10_code.selected = None
-
-        #             self.the_lines.insert(this_index, One_Code_Line(
-        #                 x_offset3, one_ICD10_code.ICD10_Code, one_ICD10_code.description, one_ICD10_code.is_billable, selected, 'ICD10_Code',will_expand_these_codes))
-        #         else:
-        #             self.the_lines.insert(this_index, One_Code_Line(
-        #                 x_offset3, one_ICD10_code.ICD10_Code, one_ICD10_code.description, one_ICD10_code.is_billable, one_ICD10_code.selected, 'ICD10_Code', will_expand_these_codes))
-
-
-        #         new_codes.append(one_ICD10_code.ICD10_Code)
-
-            
-        #     if number_of_codes_added >= 40:
-        #         break
-        #     else:
-        #         x_offset3 += 30 
-
 
         codes_to_display = []
         if this_type == 'sub_category':
@@ -192,12 +145,13 @@ class ICD10Code_DisplayClass():
             self.The_Canvas.Create_Dummy_Line(index*30)
 
     def Add_1000_dummy_lines(self):
-        self.test_index+=1
-        self.The_Canvas.delete('all')
-        for index in range(self.test_index*1000):
-            self.The_Canvas.Create_Dummy_Line(index*30)
+        # self.test_index+=1
+        # self.The_Canvas.delete('all')
+        # for index in range(self.test_index*1000):
+        #     self.The_Canvas.Create_Dummy_Line(index*30)
 
-        self.The_Canvas.configure(scrollregion=self.The_Canvas.bbox("all"))
+        # self.The_Canvas.configure(scrollregion=self.The_Canvas.bbox("all"))
+        pass
 
     def get_number_rows(self):
 
@@ -211,10 +165,10 @@ class ICD10Code_DisplayClass():
         for index in range(len(self.the_lines)):
         #for one_line in self.the_lines:
             one_line = self.the_lines[index]   
-            one_line.y = next_y
+            one_line.y1 = next_y
             self.The_Canvas.Add_Line(one_line, index+1)
             
-            next_y = one_line.y +30
+            next_y = one_line.y2 +30
 
         # This is to update the scrolling region
 
@@ -249,13 +203,17 @@ class ICD10Code_DisplayClass():
         if type=='sub_category':
             these_codes = [
                 x for x in self.The_Codes.all_codes if x.sub_category == this_tag]
+            these_lines = [ x for x in self.the_lines if x.tag in [y.ICD10_Code for y in these_codes]]
+
             this_code = next(
                 x for x in self.The_Codes.sub_categories if x.range_string == this_tag)                
         else:
             these_codes = [
                 x for x in self.The_Codes.all_codes if this_tag in x.ICD10_Code] 
             this_code = next(
-                x for x in self.The_Codes.all_codes if x.ICD10_Code == this_tag)           
+                x for x in self.The_Codes.all_codes if x.ICD10_Code == this_tag)   
+            these_lines = [x for x in self.the_lines if x.tag in [
+                y.ICD10_Code for y in these_codes]]
 
         selected = True
         new_color = highlight_color
@@ -264,19 +222,21 @@ class ICD10Code_DisplayClass():
             selected = False
             new_color = background_color
 
-        if selected:
-            self.SearchFrame_Obj.Add_Category(this_code.category)
-        else:
-            self.SearchFrame_Obj.Remove_Category(this_code.category)
-
         this_code.selected = selected
         this_line.selected = selected
-        self.The_Canvas.itemconfig(
-            bg_tag, fill=new_color)
+        for y in range(this_line.y1, this_line.y2+1, 30):
+            self.The_Canvas.itemconfig(
+                bg_tag+str(y), fill=new_color)
+
         if this_line.expanded:
             for one_code in these_codes:
-                self.The_Canvas.itemconfig(
-                    'bg'+one_code.ICD10_Code, fill=new_color)
+
+                this_one_code_line = next((x for x in these_lines if x.tag==one_code.ICD10_Code), None)
+
+                if not this_one_code_line==None:
+                    for y in range(this_one_code_line.y1, this_one_code_line.y2+1,30):
+                        self.The_Canvas.itemconfig(
+                            'bg'+one_code.ICD10_Code+str(y), fill=new_color)
             else:
                 for one_icd10_code in [x for x in self.The_Codes.all_codes if x.sub_category == this_line.tag]:
                     one_icd10_code.expanded = None
@@ -302,8 +262,9 @@ class ICD10Code_DisplayClass():
             self.SearchFrame_Obj.Remove_Category(this_tag)
 #        if this_line.selected:
 #            this_line.selected = False
-        self.The_Canvas.itemconfig(
-            bg_tag, fill=new_color)
+        for y in range(this_line.y1, this_line.y2+1, 30):
+            self.The_Canvas.itemconfig(
+                bg_tag+str(y), fill=new_color)
 
         this_line.selected = selected
         this_code.selected = selected
@@ -355,7 +316,7 @@ class ICD10Code_DisplayClass():
                 self.Remove_ICD10_Lines(this_tag, 'sub_category')
         else:
             this_code = next(
-                x for x in self.The_Codes.all_codes if x.range_string == this_tag)
+                x for x in self.The_Codes.all_codes if x.ICD10_Code == this_tag)
             if self.The_Canvas.itemcget(tag_clicked, 'text') == '+':
                 this_line.expanded = True
                 self.Add_ICD10_Lines(this_tag, 'icd10_code')
@@ -411,18 +372,15 @@ class ICD10Code_DisplayClass():
 
     def get_tag(self, event):
 
-        x_coordinate = event.x
-        y_coordinate = event.y
-
         #figure out if something expandible was pressed
 
         for one_line in self.the_lines:
             if one_line.layer=='ICD10_Code' and one_line.is_billable:
-                if (one_line.y-5) < self.The_Canvas.canvasy(y_coordinate) < (one_line.y+18):
+                if (one_line.y1-5) < self.The_Canvas.canvasy(event.y) < (one_line.y2+18):
                     return 'code{0}'.format(one_line.tag)
             else:
-                if (one_line.y-5) < self.The_Canvas.canvasy(y_coordinate) < (one_line.y+18):
-                    if (one_line.x_offset-10) <= x_coordinate <= (one_line.x_offset+14):
+                if (one_line.y1-5) < self.The_Canvas.canvasy(event.y) < (one_line.y2+18):
+                    if (one_line.x_offset-10) <= event.x <= (one_line.x_offset+14):
                         return 'plus_minus{0}'.format(one_line.tag)
                     else:
                         return 'code{0}'.format(one_line.tag)

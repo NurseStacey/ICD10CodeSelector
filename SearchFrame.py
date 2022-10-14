@@ -22,7 +22,7 @@ class SearchFrame_Class(tk.Frame):
             family="Arial", size=15), width=12, height=2, wraplength=90).grid(row=this_row, column=2, pady=5)
 
         this_row += 1
-        tk.Button(self, name='clear_list', underline=0, text='Clear Search Term List',  font=tkfont.Font(
+        tk.Button(self, name='clear_list', underline=0, text='Clear Search Term List', command=self.clear_search_term, font=tkfont.Font(
             family="Arial", size=12), width=12, height=3, wraplength=90).grid(row=this_row, column=1, pady=5)
 
         tk.Button(self, name='add_search_term', underline=0, text='Add Search Term',  command=self.add_search_term, font=tkfont.Font(

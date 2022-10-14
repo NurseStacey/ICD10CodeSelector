@@ -1049,52 +1049,60 @@ class MyCanvas(tk.Canvas):
 
     def Add_Line(self, one_line, row_number):
 
+        which_line = 0
+        this_y = one_line.y1
+
         if one_line.selected:
-            self.create_rectangle(0, one_line.y, 900, one_line.y+30,
-                                  tag='bg{0}'.format(one_line.tag), width=0, fill=highlight_color)
+            self.create_rectangle(0, one_line.y1, 900, one_line.y1+30,
+                                  tag='bg{0}{1}'.format(one_line.tag, str(this_y)), width=0, fill=highlight_color)
         else:
             self.create_rectangle(
-                0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=background_color)
+                0, one_line.y1, 900, one_line.y1+30,  tag='bg{0}{1}'.format(one_line.tag, str(this_y)), width=0, fill=background_color)
 
-        self.create_text(5, one_line.y, anchor='nw', tag='row_number{0}'.format(one_line.tag), text=str(row_number), font=tkfont.Font(
+        self.create_text(5, one_line.y1, anchor='nw', tag='row_number{0}'.format(one_line.tag), text=str(row_number), font=tkfont.Font(
             family="Arial", size=13))
+
+        # if row_number==37:
+        #     pass
 
         if not one_line.layer == 'ICD10_Code' or not one_line.is_billable:
             if one_line.expanded:
-                self.create_text(one_line.x_offset, one_line.y, anchor='nw', tag='plus_minus{0}'.format(one_line.tag), text='-', font=tkfont.Font(
+                self.create_text(one_line.x_offset, one_line.y1, anchor='nw', tag='plus_minus{0}'.format(one_line.tag), text='-', font=tkfont.Font(
                     family="Arial", size=13))
             else:
-                self.create_text(one_line.x_offset, one_line.y, anchor='nw', tag='plus_minus{0}'.format(one_line.tag), text='+', font=tkfont.Font(
+                self.create_text(one_line.x_offset, one_line.y1, anchor='nw', tag='plus_minus{0}'.format(one_line.tag), text='+', font=tkfont.Font(
                     family="Arial", size=13))
 
         the_code = one_line.tag
         if len(the_code)>3:
             the_code = one_line.tag[0:3] +'.' + one_line.tag[3:]
 
-        self.create_text(one_line.x_offset+20, one_line.y, anchor='nw', tag='code{0}'.format(one_line.tag), text=the_code, font=tkfont.Font(
+        self.create_text(one_line.x_offset+20, one_line.y1, anchor='nw', tag='code{0}'.format(one_line.tag), text=the_code, font=tkfont.Font(
             family="Arial", size=13))
 
         whole_description_text = ' -  ' + one_line.description
-        while len(whole_description_text)>(115-int(one_line.x_offset/6)):
-            end_spot=(115-int(one_line.x_offset/6))
+        while len(whole_description_text)>(115-int(one_line.x_offset/4)):
+            end_spot=(115-int(one_line.x_offset/4))
             while not whole_description_text[end_spot]==' ':
                 end_spot -= 1
 
-            self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=whole_description_text[0:end_spot], font=tkfont.Font(
+            self.create_text(one_line.x_offset+100, this_y, anchor='nw', tag='description{0}{1}'.format(str(which_line), one_line.tag), text=whole_description_text[0:end_spot], font=tkfont.Font(
                 family="Arial", size=13))
             
             whole_description_text = '  ' + whole_description_text[end_spot:]
-            one_line.y+=30
+            this_y += 30
             if one_line.selected:
-                self.create_rectangle(0, one_line.y, 900, one_line.y+30,
-                                      tag='bg{0}'.format(one_line.tag), width=0, fill=highlight_color)
+                self.create_rectangle(0, this_y, 900, this_y+30,
+                                      tag='bg{0}{1}'.format(one_line.tag, str(this_y)), width=0, fill=highlight_color)
             else:
                 self.create_rectangle(
-                    0, one_line.y, 900, one_line.y+30,  tag='bg{0}'.format(one_line.tag), width=0, fill=background_color)
+                    0, this_y, 900, this_y+30,  tag='bg{0}{1}'.format(one_line.tag, str(this_y)), width=0, fill=background_color)
+                    
+            which_line+=1
 
-        self.create_text(one_line.x_offset+100, one_line.y, anchor='nw', tag='description{0}'.format(one_line.description), text=whole_description_text, font=tkfont.Font(
+        one_line.y2=this_y
+        self.create_text(one_line.x_offset+100, this_y, anchor='nw', tag='description{0}{1}'.format(which_line, one_line.tag), text=whole_description_text, font=tkfont.Font(
             family="Arial", size=13))
-
 
     def Add_Search_Results(self, search_results):
 
